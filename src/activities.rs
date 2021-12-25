@@ -2,7 +2,6 @@ use super::api::{v3, AccessToken, ResourceState};
 use super::athletes::Athlete;
 use super::error::Result;
 use super::http::get;
-use super::resources::Map;
 use super::segmentefforts::SegmentEffort;
 use serde::Deserialize;
 
@@ -54,19 +53,19 @@ pub enum WorkoutType {
 #[derive(Debug, Deserialize)]
 pub struct Activity {
     // Meta representation
-    pub id: i32,
+    pub id: u64,
     pub resource_state: ResourceState,
 
     // Summary representation
     pub external_id: String,
-    pub upload_id: i32,
+    pub upload_id: u64,
     pub athlete: Athlete,
     pub name: String,
     pub distance: f32,
     pub moving_time: i32,
     pub elapsed_time: i32,
     pub total_elevation_gain: f32,
-    pub activity_type: ActivityType,
+    pub r#type: ActivityType,
     pub start_date: String,       //TODO decode time from string
     pub start_date_local: String, //TODO decode time from string
     pub timezone: String,
@@ -77,35 +76,79 @@ pub struct Activity {
     pub comment_count: i32,
     pub athlete_count: i32,
     pub photo_count: i32,
-    pub map: Map,
+    //pub map: Map,
     pub trainer: bool,
     pub commute: bool,
     pub manual: bool,
     pub private: bool,
     pub flagged: bool,
-    pub workout_type: WorkoutType,
+    pub workout_type: Option<WorkoutType>,
     pub gear_id: String,
     pub average_speed: f32,
     pub max_speed: f32,
     pub average_cadence: f32,
-    pub average_temp: f32,
-    pub average_watts: f32,
-    pub weighted_average_watts: i32,
-    pub kilojoules: f32,
-    pub device_watts: bool,
-    pub max_heartrate: i32,
-    pub truncated: i32,
+    pub average_temp: Option<f32>,
+    pub average_watts: Option<f32>,
+    pub weighted_average_watts: Option<i32>,
+    pub kilojoules: Option<f32>,
+    pub device_watts: Option<bool>,
+    pub max_heartrate: f32,
+    pub truncated: Option<i32>,
     pub has_kudoed: bool,
 
     // Detail represenation
-    pub calories: f32,
-    pub description: String,
+    pub calories: Option<f32>,
+    pub description: Option<String>,
     // TODO pub gear: Gear,
-    pub segment_efforts: Vec<SegmentEffort>,
+    pub segment_efforts: Option<Vec<SegmentEffort>>,
     pub splits_metric: Vec<Split>,
     pub splits_standard: Vec<Split>,
     pub best_efforts: Vec<SegmentEffort>,
     // TODO pub photos: Photos
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SummaryActivity {
+    pub id: u64,
+    pub external_id: String,
+    pub upload_id: u64,
+    pub athlete: Athlete,
+    pub name: String,
+    pub distance: f32,
+    pub moving_time: u32,
+    pub elapsed_time: u32,
+    pub total_elevation_gain: f32,
+    pub elev_high: Option<f32>,
+    pub elev_low: Option<f32>,
+    pub r#type: ActivityType,
+    pub start_date: String,
+    pub start_date_local: String,
+    pub timezone: String,
+    pub start_latlng: Vec<f32>,
+    pub end_latlng: Vec<f32>,
+    pub achievement_count: u32,
+    pub kudos_count: u32,
+    pub comment_count: u32,
+    pub athlete_count: u32,
+    pub photo_count: u32,
+    pub total_photo_count: u32,
+    //pub map: Map
+    pub trainer: bool,
+    pub commute: bool,
+    pub manual: bool,
+    pub private: bool,
+    pub flagged: bool,
+    //pub workout_type:  u32
+    pub upload_id_str: String,
+    pub average_speed: f32,
+    pub max_speed: f32,
+    pub has_kudoed: bool,
+    pub gear_id: Option<String>,
+    pub kilojoules: Option<f32>,
+    pub average_watts: Option<f32>,
+    pub device_watts: Option<bool>,
+    pub max_watts: Option<u32>,
+    pub weighted_average_watts: Option<u32>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -114,15 +157,15 @@ pub struct Cords {
     y: f32,
 }
 
-impl Activity {
-    pub async fn get(token: &AccessToken, id: String) -> Result<Activity> {
+impl SummaryActivity {
+    pub async fn get(token: &AccessToken, id: String) -> Result<SummaryActivity> {
         let url = v3(Some(token), format!("activities/{}", id));
-        Ok(get::<Activity>(&url[..]).await?)
+        Ok(get::<SummaryActivity>(&url[..]).await?)
     }
 
-    pub async fn athlete_activities(token: &AccessToken) -> Result<Vec<Activity>> {
+    pub async fn athlete_activities(token: &AccessToken) -> Result<Vec<SummaryActivity>> {
         let url = v3(Some(token), "athlete/activities".to_string());
-        Ok(get::<Vec<Activity>>(&url[..]).await?)
+        Ok(get::<Vec<SummaryActivity>>(&url[..]).await?)
     }
 }
 
